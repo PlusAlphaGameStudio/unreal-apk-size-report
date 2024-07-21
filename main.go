@@ -20,7 +20,14 @@ type ArchiveFile struct {
 }
 
 func main() {
-	logFile, err := os.OpenFile("size-report.txt", os.O_CREATE | os.O_TRUNC | os.O_RDWR, 0666)
+	if len(os.Args) != 2 {
+		fmt.Printf("Help: %s [apk file path]\n", os.Args[0])
+		return
+	}
+
+	outputPath := "size-report.txt"
+
+	logFile, err := os.OpenFile(outputPath, os.O_CREATE | os.O_TRUNC | os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +42,12 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, logFile)
 	//log.SetOutput(mw)
 
-	rootSrc := "/Users/gb/Downloads/top.plusalpha.ripper-1.0.0.288.apk"
+	rootSrc := os.Args[1] // "/Users/gb/Downloads/top.plusalpha.ripper-1.0.0.288.apk"
+	rootSrc, err = filepath.Abs(rootSrc)
+	if err != nil {
+		panic(err)
+	}
+
 	rootDst := strings.TrimSuffix(rootSrc, filepath.Ext(rootSrc))
 
 	err = unzip(rootDst, rootSrc)
@@ -151,6 +163,13 @@ func main() {
 	for _, f := range archiveFiles {
 		_, _ = fmt.Fprintf(mw, "%10s\t%s\n", byteCountIEC(f.Size), f.FullPath[pathStartIndex:])
 	}
+
+	outputPath, err = filepath.Abs(outputPath)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Size report file created at %s\n", outputPath)
 }
 
 func byteCountIEC(b int64) string {
