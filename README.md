@@ -6,7 +6,7 @@
 
 아래 링크에서 34회 공고를 확인할 수 있습니다.
 
-https://github.com/yingyeothon/yingyeothon.github.io/issues/46
+https://yyt.life/2024/07/21/the-34.html
 
 공고 아래에 제가 개발 전에 당초 계획했던 목표를 아래에 붙여넣었습니다.
 
