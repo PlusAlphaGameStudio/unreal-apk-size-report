@@ -20,8 +20,8 @@ type ArchiveFile struct {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Printf("Help: %s [apk file path]\n", os.Args[0])
+	if len(os.Args) != 3 {
+		fmt.Printf("Help: %s [apk file path] [resource base path]\n", os.Args[0])
 		return
 	}
 
@@ -48,7 +48,18 @@ func main() {
 		panic(err)
 	}
 
-	rootDst := strings.TrimSuffix(rootSrc, filepath.Ext(rootSrc))
+	// 압축 파일 풀 경로 임시로 만든다.
+	rootDst, err := os.MkdirTemp("", filepath.Base(rootSrc))
+	if err != nil {
+		panic(err)
+	}
+
+	defer func(path string) {
+		err := os.RemoveAll(path)
+		if err != nil {
+			panic(err)
+		}
+	}(rootDst) // clean up
 
 	err = unzip(rootDst, rootSrc)
 	if err != nil {
@@ -68,7 +79,7 @@ func main() {
 		panic(err)
 	}
 
-	resourceBasePath := "assets/main.obb/Ripper/Content/Paks/Ripper-Android_ASTC"
+	resourceBasePath := os.Args[2] // "assets/main.obb/Ripper/Content/Paks/Ripper-Android_ASTC"
 
 	pakSrc := path.Join(rootDst, resourceBasePath + ".pak")
 	pakDst := strings.TrimSuffix(pakSrc, filepath.Ext(pakSrc)) + "_pak"
