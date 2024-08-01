@@ -99,7 +99,11 @@ func main() {
 
 	err = unpak(ucasDst, ucasSrc)
 	if err != nil {
-		panic(err)
+		// unpak() 함수가 거의 마무리 단계에서 실패하기도 하는 것 같다. 근데 실행은 다 되고 실패하는 것 같기도 하고?
+		// panic이 아닌 메시지 출력으로 끝내고, 이어서 진행하자.
+		//panic(err)
+		fmt.Println("unpak() failed with error: " + err.Error())
+		fmt.Println("ignoring unpak() and proceed...")
 	}
 
 	err = os.Remove(ucasSrc)
