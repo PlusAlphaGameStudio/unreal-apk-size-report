@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 )
 
 type ArchiveFile struct {
@@ -202,7 +204,21 @@ func byteCountIEC(b int64) string {
 }
 
 func unpak(dst string, src string) error {
-	unpakCmd := exec.Command("/Users/Shared/Epic Games/UE_5.4/Engine/Binaries/Mac/UnrealPak", src, "-extract", dst)
+	// 60초 타임아웃
+	// 종종 UnrealPak이 종료되지 않을 때가 있는 것 같다.
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel() // 타임아웃이 끝나면 context가 종료되도록 cancel 호출
+
+	unpakCmd := exec.CommandContext(ctx, "/Users/Shared/Epic Games/UE_5.4/Engine/Binaries/Mac/UnrealPak", src, "-extract", dst)
+	err := unpakCmd.Run()
+
+	// 에러 처리
+	if ctx.Err() == context.DeadlineExceeded {
+		return errors.New("UnrealPak command timed out")
+	} else if err != nil {
+		return err
+	}
+
 	output, err := unpakCmd.Output()
 	if err != nil {
 		return err
