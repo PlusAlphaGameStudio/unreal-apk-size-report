@@ -22,8 +22,8 @@ type ArchiveFile struct {
 }
 
 func main() {
-	if len(os.Args) != 3 {
-		fmt.Printf("Help: %s [apk file path] [resource base path]\n", os.Args[0])
+	if len(os.Args) != 4 {
+		fmt.Printf("Help: %s [engine path] [apk file path] [resource base path]\n", os.Args[0])
 		return
 	}
 
@@ -44,7 +44,9 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, logFile)
 	//log.SetOutput(mw)
 
-	rootSrc := os.Args[1] // "/Users/gb/Downloads/top.plusalpha.ripper-1.0.0.288.apk"
+	enginePath := os.Args[1] // "/Users/Shared/Epic Games/UE_5.4/Engine"
+
+	rootSrc := os.Args[2] // "/Users/gb/Downloads/top.plusalpha.ripper-1.0.0.288.apk"
 	rootSrc, err = filepath.Abs(rootSrc)
 	if err != nil {
 		panic(err)
@@ -81,12 +83,12 @@ func main() {
 		panic(err)
 	}
 
-	resourceBasePath := os.Args[2] // "assets/main.obb/Ripper/Content/Paks/Ripper-Android_ASTC"
+	resourceBasePath := os.Args[3] // "assets/main.obb/Ripper/Content/Paks/Ripper-Android_ASTC"
 
 	pakSrc := path.Join(rootDst, resourceBasePath + ".pak")
 	pakDst := strings.TrimSuffix(pakSrc, filepath.Ext(pakSrc)) + "_pak"
 
-	err = unpak(pakDst, pakSrc)
+	err = unpak(enginePath, pakDst, pakSrc)
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +101,7 @@ func main() {
 	ucasSrc := path.Join(rootDst, resourceBasePath + ".ucas")
 	ucasDst := strings.TrimSuffix(ucasSrc, filepath.Ext(ucasSrc)) + "_ucas"
 
-	err = unpak(ucasDst, ucasSrc)
+	err = unpak(enginePath, ucasDst, ucasSrc)
 	if err != nil {
 		// unpak() 함수가 거의 마무리 단계에서 실패하기도 하는 것 같다. 근데 실행은 다 되고 실패하는 것 같기도 하고?
 		// panic이 아닌 메시지 출력으로 끝내고, 이어서 진행하자.
@@ -203,13 +205,13 @@ func byteCountIEC(b int64) string {
 		float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-func unpak(dst string, src string) error {
+func unpak(enginePath string, dst string, src string) error {
 	// 60초 타임아웃
 	// 종종 UnrealPak이 종료되지 않을 때가 있는 것 같다.
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel() // 타임아웃이 끝나면 context가 종료되도록 cancel 호출
 
-	unpakCmd := exec.CommandContext(ctx, "/Users/Shared/Epic Games/UE_5.4/Engine/Binaries/Mac/UnrealPak", src, "-extract", dst)
+	unpakCmd := exec.CommandContext(ctx, enginePath + "/Binaries/Mac/UnrealPak", src, "-extract", dst)
 	output, err := unpakCmd.Output()
 
 	// 에러 처리
