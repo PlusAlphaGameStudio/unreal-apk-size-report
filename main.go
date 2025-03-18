@@ -18,7 +18,7 @@ import (
 
 type ArchiveFile struct {
 	FullPath string
-	Size int64
+	Size     int64
 }
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 
 	outputPath := "size-report.txt"
 
-	logFile, err := os.OpenFile(outputPath, os.O_CREATE | os.O_TRUNC | os.O_RDWR, 0666)
+	logFile, err := os.OpenFile(outputPath, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -58,13 +58,16 @@ func main() {
 		panic(err)
 	}
 
-	defer func(path string) {
-		err := os.RemoveAll(path)
-		if err != nil {
-			panic(err)
-		}
-	}(rootDst) // clean up
-
+	// panic이 되면 이 함수가 먼저 호출되어 중간 결과물이 지워진다.
+	// 분석이 힘들어지므로 끄자.
+	/*
+		defer func(path string) {
+			err := os.RemoveAll(path)
+			if err != nil {
+				panic(err)
+			}
+		}(rootDst) // clean up
+	*/
 	err = unzip(rootDst, rootSrc)
 	if err != nil {
 		panic(err)
@@ -85,7 +88,7 @@ func main() {
 
 	resourceBasePath := os.Args[3] // "assets/main.obb/Ripper/Content/Paks/Ripper-Android_ASTC"
 
-	pakSrc := path.Join(rootDst, resourceBasePath + ".pak")
+	pakSrc := path.Join(rootDst, resourceBasePath+".pak")
 	pakDst := strings.TrimSuffix(pakSrc, filepath.Ext(pakSrc)) + "_pak"
 
 	err = unpak(enginePath, pakDst, pakSrc)
@@ -98,7 +101,7 @@ func main() {
 		panic(err)
 	}
 
-	ucasSrc := path.Join(rootDst, resourceBasePath + ".ucas")
+	ucasSrc := path.Join(rootDst, resourceBasePath+".ucas")
 	ucasDst := strings.TrimSuffix(ucasSrc, filepath.Ext(ucasSrc)) + "_ucas"
 
 	err = unpak(enginePath, ucasDst, ucasSrc)
@@ -137,7 +140,7 @@ func main() {
 		panic(errWalk)
 	}
 
-	sort.Slice(archiveFiles, func (i, j int) bool {
+	sort.Slice(archiveFiles, func(i, j int) bool {
 		return archiveFiles[i].Size > archiveFiles[j].Size
 	})
 
@@ -166,7 +169,7 @@ func main() {
 		})
 	}
 
-	sort.Slice(archiveFileByExts, func (i, j int) bool {
+	sort.Slice(archiveFileByExts, func(i, j int) bool {
 		return archiveFileByExts[i].Size > archiveFileByExts[j].Size
 	})
 
@@ -211,7 +214,10 @@ func unpak(enginePath string, dst string, src string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel() // 타임아웃이 끝나면 context가 종료되도록 cancel 호출
 
-	unpakCmd := exec.CommandContext(ctx, enginePath + "/Binaries/Mac/UnrealPak", src, "-extract", dst)
+	unpakCmd := exec.CommandContext(ctx, path.Join(enginePath, UNREALPAK_PATH), src, "-extract", dst)
+
+	fmt.Println("Running the external program: " + unpakCmd.String())
+
 	output, err := unpakCmd.Output()
 
 	// 에러 처리
